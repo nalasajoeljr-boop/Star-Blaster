@@ -663,7 +663,7 @@ function abTarget() {
   return best;
 }
 function abAlive(tg) { return tg && !tg.dead && !(tg.hp !== undefined && tg.hp <= 0) && tg.y > -30 && tg.y < H + 30 && (tg === G.boss || G.ast.includes(tg) || G.min.includes(tg)); }
-function areaHit(x, y, r, dmg, pet) { G.bullets.push({ x, y, vx: 0, vy: 0, r, pierce: true, hit: [], dmg: dmg * 1.2, dead: false, life: .14, rot: 0, pet, hid: 1 }); }
+function areaHit(x, y, r, dmg, pet, chip) { G.bullets.push({ x, y, vx: 0, vy: 0, r, pierce: true, hit: [], dmg: dmg * 1.2, dead: false, life: .14, rot: 0, pet, hid: 1, chip }); }
 function petAbStart(S, id, p) {
   const any = G.boss || G.ast.some(a => !a.dead && a.y > 20) || G.min.length;
   if (id === 'rexy') { if (!any) return false; S.ab = { k: 'rampage', t: 0, dir: S.x < W / 2 ? 1 : -1, y: clamp(p.y - 190, 260, H - 260), tk: 0 }; text(S.x, S.y - 34, 'RAMPAGE!', '#a6ff7a', 17); sfx.smite && sfx.smite(); return true; }
@@ -818,12 +818,12 @@ function updatePfx(dt) {
   for (const f of L) {
     f.t += dt; if (f.t < 0) continue;
     if (f.k === 'meteor') { if (f.t >= .5) { explosion(f.x, f.y, 40, 25); ring(f.x, f.y, 90, 25, .4); G.shake = Math.max(G.shake, 5); areaHit(f.x, f.y, 62, 4.5, 'ember'); sfx.boom && sfx.boom(1); L.push({ k: 'pool', x: f.x, y: f.y, t: 0, tk: 0, dur: 2.4 }); f.dead = 1; } }
-    else if (f.k === 'pool') { f.tk -= dt; if (f.tk <= 0) { f.tk = .3; areaHit(f.x, f.y, 44, 1.1, 'ember'); } if (f.t > f.dur) f.dead = 1; }
+    else if (f.k === 'pool') { f.tk -= dt; if (f.tk <= 0) { f.tk = .3; areaHit(f.x, f.y, 44, 1.1, 'ember', .001); } if (f.t > f.dur) f.dead = 1; }
     else if (f.k === 'pillar') { if (!f.did && f.t >= .45) { f.did = 1; areaHit(f.x, f.y, 52, 6, 'lumi'); for (const e of G.eb) if (!e.dead && Math.abs(e.x - f.x) < 48) e.dead = true; ring(f.x, f.y, 80, 50, .4); burst(f.x, f.y, 50, 14, 160, 3); G.shake = Math.max(G.shake, 3); } if (f.t > .95) f.dead = 1; }
     else if (f.k === 'spike') { if (!f.did && f.t >= .35) { f.did = 1; areaHit(f.x, f.y, 52, 5, 'frosty'); ring(f.x, f.y, 90, 195, .4); burst(f.x, f.y, 195, 14, 170, 3); G.shake = Math.max(G.shake, 3); } if (f.t > 1.1) f.dead = 1; }
     else if (f.k === 'slash') { if (!f.did && f.t >= .08) { f.did = 1; areaHit(f.x, f.y, 40, 3.2, 'mochi'); burst(f.x, f.y, 330, 6, 150, 2); sfx.tick && sfx.tick(); } if (f.t > .5) f.dead = 1; }
     else if (f.k === 'halo') { f.R = Math.min(280, f.t * 430); for (const e of G.eb) if (!e.dead && Math.hypot(e.x - f.x, e.y - f.y) < f.R) { e.dead = true; G.score += 2; } if (f.t > .7) f.dead = 1; }
-    else if (f.k === 'field') { const ft = pxTargets(1)[0], kk = Math.min(1, dt * 2.2); if (ft) { f.x += (ft.x - f.x) * kk; f.y += (Math.min(ft.y + 40, H - 200) - f.y) * kk; } else { f.x += (f.S.x - f.x) * kk; f.y += (f.S.y - f.y) * kk; } f.tk -= dt; if (f.tk <= 0) { f.tk = .25; areaHit(f.x, f.y, f.r, 1.3, 'jelly'); for (const e of G.eb) if (!e.dead && Math.hypot(e.x - f.x, e.y - f.y) < f.r) { e.dead = true; burst(e.x, e.y, 140, 3, 80, 2); } } if (f.t > f.dur) f.dead = 1; }
+    else if (f.k === 'field') { const ft = pxTargets(1)[0], kk = Math.min(1, dt * 2.2); if (ft) { f.x += (ft.x - f.x) * kk; f.y += (Math.min(ft.y + 40, H - 200) - f.y) * kk; } else { f.x += (f.S.x - f.x) * kk; f.y += (f.S.y - f.y) * kk; } f.tk -= dt; if (f.tk <= 0) { f.tk = .25; areaHit(f.x, f.y, f.r, 1.3, 'jelly', .001); for (const e of G.eb) if (!e.dead && Math.hypot(e.x - f.x, e.y - f.y) < f.r) { e.dead = true; burst(e.x, e.y, 140, 3, 80, 2); } } if (f.t > f.dur) f.dead = 1; }
     else if (f.k === 'quake') { f.R = f.t * 600; f.cy = f.y - f.R; f.nx -= dt; if (f.nx <= 0) { f.nx = .09; for (let x = 40; x < W; x += 80) areaHit(x, f.cy, 48, 2.3, 'rexy'); G.shake = Math.max(G.shake, 5); } if (f.cy < -40) f.dead = 1; }
     else if (f.k === 'meeting') { if (!f.did && f.t >= 1.05) { f.did = 1; sfx.boom && sfx.boom(1); G.shake = Math.max(G.shake, 8); G.flash = Math.max(G.flash, .25); for (const t of pxTargets(8)) { areaHit(t.x, t.y, (t.r || 16) + 12, 7, 'bean'); text(t.x, t.y - (t.r || 16) - 8, 'EJECTED!', '#ff7a86', 13); burst(t.x, t.y, 0, 12, 200, 3); ring(t.x, t.y, (t.r || 16) * 2, 0, .4); } } if (f.t > 1.6) f.dead = 1; }
     else if (f.k === 'dog') { f.y -= 560 * dt; f.x += Math.sin(f.t * 6 + f.i * 2) * 55 * dt; f.tk -= dt; if (f.tk <= 0) { f.tk = .07; areaHit(f.x, f.y, 30, 2.2, 'biscuit'); } if (G.parts.length < 600 && Math.random() < .7) G.parts.push({ x: f.x + rand(-8, 8), y: f.y + 24, vx: rand(-20, 20), vy: rand(20, 80), life: .5, max: .5, size: rand(2, 4), color: 'rgba(255,200,120,.7)' }); if (f.y < -50) { f.dead = 1; ring(f.x, 10, 70, 35, .3); } }
@@ -5953,7 +5953,8 @@ function update(dt0) {
       if (b.pierce) b.hit.push(d); else { b.dead = true; break; }
     }
     if (!b.dead && BB && !b.hit.includes(BB) && near(b, BB, b.r, BB.r)) {
-      BB.hp -= b.dmg; BB.flash = .06;
+      { let dm = b.dmg; if (b.pet) dm = Math.min(BB.maxhp * .03, dm * 2.2 + BB.maxhp * (b.chip !== undefined ? b.chip : b.hid ? .003 : .002)); BB.hp -= dm; }
+      BB.flash = .06;
       burst(b.x, b.y, BB.hue, 3, 120, 2); sfx.tick();
       if (b.pierce) b.hit.push(BB); else b.dead = true;
       if (BB.hp <= 0) killBoss();
